@@ -10,6 +10,8 @@ newtype Modifier   = Modifier Word8
 newtype Key        = Key Word16
 newtype Attribute  = Attribute Word16
 
+pattern AttributeInvalid = Attribute 0xFFFF
+
 -------------------------------------------------------------------------------
 -- This type represents a termbox event. The 'Mod', 'Key' and 'Ch' fields are
 -- valid if 'Type' is EventKey. The 'Width' and 'Height' fields are valid if
