@@ -1,7 +1,11 @@
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Termbox.Internal.Types where
 
-import Data.BufferBuilder
+import System.IO.Streams
+import System.IO
+import Control.Monad.IO.Class
+import Control.Monad.Trans.State.Strict
 import Termbox.API.Types
 import Data.Monoid
 import Data.ByteString (ByteString)
@@ -35,8 +39,8 @@ instance Monoid Rect where
     mappend (Rect w1 h1) (Rect w2 h2) = Rect (w1 + w2) (h1 + h2)
 
 -------------------------------------------------------------------------------
-data Termbox = Termbox {
-    outBuffer         :: !(BufferBuilder ())
+data TermboxState = TermboxState {
+    outBuffer         :: !(OutputStream ByteString)
   , keys              :: ![T.Text]
   , funcs             :: ![T.Text]
   , input_mode        :: !InputMode
@@ -52,6 +56,9 @@ data Termbox = Termbox {
   , cursor            :: !CursorPosition
   }
 
+newtype Termbox a = Termbox { runTermbox :: StateT TermboxState IO a }
+  deriving (Functor, Applicative, Monad, MonadIO)
+
 -- 	// termbox inner state
 -- 	orig_tios      syscall_Termios
 -- 	out            *os.File
@@ -65,9 +72,11 @@ data Termbox = Termbox {
 -- 	intbuf         = make([]byte, 0, 16)
 
 -------------------------------------------------------------------------------
-newTermbox :: Termbox
-newTermbox = Termbox {
-    outBuffer  = pure ()
+newTermbox :: Handle -> IO TermboxState
+newTermbox hdl = do
+  oB <- handleToOutputStream hdl
+  return TermboxState {
+    outBuffer  = oB
   , keys  = []
   , funcs = []
   , input_mode  = InputEsc
