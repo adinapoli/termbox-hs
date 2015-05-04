@@ -1,20 +1,25 @@
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Termbox.Internal.Types where
 
 import System.IO.Streams
 import System.IO
+import Control.Monad.State (MonadState, get, put)
 import Control.Monad.IO.Class
-import Control.Monad.Trans.State.Strict
+import Control.Monad.Trans.State.Strict (StateT(..))
 import Termbox.API.Types
 import Data.Monoid
+import Data.String.Conv
 import Data.ByteString (ByteString)
+import Data.ByteString.Builder
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 
 -------------------------------------------------------------------------------
 data CellBuf = CellBuf {
     cb_size :: !Rect
-  , cb_cells :: [Cell]
+  , cb_cells :: ![Cell]
   }
 
 instance Monoid CellBuf where
@@ -40,7 +45,7 @@ instance Monoid Rect where
 
 -------------------------------------------------------------------------------
 data TermboxState = TermboxState {
-    outBuffer         :: !(OutputStream ByteString)
+    outBuffer         :: !(OutputStream T.Text)
   , keys              :: ![T.Text]
   , funcs             :: ![T.Text]
   , input_mode        :: !InputMode
@@ -54,10 +59,8 @@ data TermboxState = TermboxState {
   , last_bg           :: !Attribute
   , last_cursor_coord :: !CursorPosition
   , cursor            :: !CursorPosition
+  , intbuf            :: !Builder
   }
-
-newtype Termbox a = Termbox { runTermbox :: StateT TermboxState IO a }
-  deriving (Functor, Applicative, Monad, MonadIO)
 
 -- 	// termbox inner state
 -- 	orig_tios      syscall_Termios
@@ -72,9 +75,34 @@ newtype Termbox a = Termbox { runTermbox :: StateT TermboxState IO a }
 -- 	intbuf         = make([]byte, 0, 16)
 
 -------------------------------------------------------------------------------
+-- The Termbox monad
+newtype Termbox a = Termbox { runTermbox :: StateT TermboxState IO a }
+  deriving (Functor, Applicative, Monad, MonadIO, MonadState TermboxState)
+
+-------------------------------------------------------------------------------
+intbufAppendInt :: Int -> Termbox ByteString
+intbufAppendInt toApp = do
+    old@TermboxState{..} <- get
+    let newState = intDec toApp <> intbuf
+    put $ old { intbuf = newState }
+    return . toS $ toLazyByteString newState
+
+-------------------------------------------------------------------------------
+writeOut :: T.Text -> Termbox ()
+writeOut toWrite = do
+    TermboxState{..} <- get
+    liftIO $ write (Just toWrite) outBuffer
+
+-------------------------------------------------------------------------------
+writeOutBS :: ByteString -> Termbox ()
+writeOutBS toWrite = do
+    TermboxState{..} <- get
+    liftIO $ write (Just . TE.decodeUtf8 $ toWrite) outBuffer
+
+-------------------------------------------------------------------------------
 newTermbox :: Handle -> IO TermboxState
 newTermbox hdl = do
-  oB <- handleToOutputStream hdl
+  oB <- contramap TE.encodeUtf8 =<< handleToOutputStream hdl
   return TermboxState {
     outBuffer  = oB
   , keys  = []
@@ -90,6 +118,7 @@ newTermbox hdl = do
   , last_bg = AttributeInvalid
   , last_cursor_coord = CursorInvalid
   , cursor = CursorHidden
+  , intbuf = mempty
   }
 
 -------------------------------------------------------------------------------
