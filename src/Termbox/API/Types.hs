@@ -3,12 +3,12 @@ module Termbox.API.Types where
 
 import Data.Word
 
-newtype InputMode  = InputMode Int
-newtype OutputMode = OutputMode Int
-newtype EventType  = EventType Word8
-newtype Modifier   = Modifier Word8
-newtype Key        = Key Word16
-newtype Attribute  = Attribute Word16
+newtype InputMode  = InputMode Int deriving (Eq, Ord, Show)
+newtype OutputMode = OutputMode Int deriving (Eq, Ord, Show)
+newtype EventType  = EventType Word8 deriving (Eq, Ord, Show)
+newtype Modifier   = Modifier Word8 deriving (Eq, Ord, Show)
+newtype Key        = Key Word16 deriving (Eq, Ord, Show)
+newtype Attribute  = Attribute Word16 deriving (Eq, Ord, Show)
 
 pattern AttributeInvalid = Attribute 0xFFFF
 
@@ -179,4 +179,3 @@ pattern EventError     = EventType 0x03
 pattern EventInterrupt = EventType 0x04
 pattern EventRaw       = EventType 0x05
 pattern EventNone      = EventType 0x06
-

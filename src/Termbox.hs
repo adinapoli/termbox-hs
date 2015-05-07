@@ -2,7 +2,10 @@
 module Termbox where
 
 import Termbox.Internal.Types
+import Termbox.API.Types
+import Control.Monad.State (gets)
 
+--------------------------------------------------------------------------------
 writeCursor :: CursorPosition -> Termbox ()
 writeCursor (CursorPosition x y) = do
   writeOut "\033["
@@ -11,51 +14,60 @@ writeCursor (CursorPosition x y) = do
   intbufAppendInt (x + 1) >>= writeOutBS 
   writeOut "H"
 
+--------------------------------------------------------------------------------
+onSGR :: Termbox ()
+      -> Termbox ()
+      -> Termbox ()
+onSGR onMatch defCase = do
+  oMode <- gets output_mode
+  go oMode
+  where
+    go oMode
+      | oMode == Output256 || oMode == Output216 || oMode == OutputGrayscale =
+        onMatch
+      | otherwise = defCase >> writeOut "m"
+
+--------------------------------------------------------------------------------
+writeSgrFg :: Attribute -> Termbox ()
+writeSgrFg (Attribute a) = onSGR onOK onKO
+  where
+    onOK = do
+      writeOut "\033[38;5;"
+      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS 
+    onKO = do
+      writeOut "\033[3"
+      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS 
+
+--------------------------------------------------------------------------------
+writeSgrBg :: Attribute -> Termbox ()
+writeSgrBg (Attribute a) = onSGR onOK onKO
+  where
+    onOK = do
+      writeOut "\033[48;5;"
+      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS 
+    onKO = do
+      writeOut "\033[4"
+      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS 
+
+--------------------------------------------------------------------------------
+-- TODO: This function can be refactored further.
+writeSgr :: Attribute -> Attribute -> Termbox ()
+writeSgr (Attribute fg) (Attribute bg) = onSGR onOK onKO
+  where
+    onOK = do
+      writeOut "\033[38;5;"
+      intbufAppendInt (fromIntegral fg - 1) >>= writeOutBS 
+      writeOut "m"
+      writeOut "\033[48;5;"
+      intbufAppendInt (fromIntegral bg - 1) >>= writeOutBS 
+    onKO = do
+      writeOut "\033[3"
+      intbufAppendInt (fromIntegral fg - 1) >>= writeOutBS 
+      writeOut ";4"
+      intbufAppendInt (fromIntegral bg - 1) >>= writeOutBS 
+
+
 {-
-func write_sgr_fg(a Attribute) {
-	switch output_mode {
-	case Output256, Output216, OutputGrayscale:
-		outbuf.WriteString("\033[38;5;")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-		outbuf.WriteString("m")
-	default:
-		outbuf.WriteString("\033[3")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-		outbuf.WriteString("m")
-	}
-}
-
-func write_sgr_bg(a Attribute) {
-	switch output_mode {
-	case Output256, Output216, OutputGrayscale:
-		outbuf.WriteString("\033[48;5;")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-		outbuf.WriteString("m")
-	default:
-		outbuf.WriteString("\033[4")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-		outbuf.WriteString("m")
-	}
-}
-
-func write_sgr(fg, bg Attribute) {
-	switch output_mode {
-	case Output256, Output216, OutputGrayscale:
-		outbuf.WriteString("\033[38;5;")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
-		outbuf.WriteString("m")
-		outbuf.WriteString("\033[48;5;")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
-		outbuf.WriteString("m")
-	default:
-		outbuf.WriteString("\033[3")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
-		outbuf.WriteString(";4")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
-		outbuf.WriteString("m")
-	}
-}
-
 type winsize struct {
 	rows    uint16
 	cols    uint16
