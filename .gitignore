@@ -3,3 +3,4 @@ dist
 examples/*.o
 examples/*.hi
 **/.*/**.c
+src/*.c
