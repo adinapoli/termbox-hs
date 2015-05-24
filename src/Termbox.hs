@@ -16,12 +16,13 @@ import           Termbox.Internal.Unsafe.Syscall.IOCtl
 
 context ioCtlCtx
 C.include "<sys/ioctl.h>"
+C.include "wrapper.h"
 
 unsafeGetWinSize :: IO (Either CInt WinSize)
 unsafeGetWinSize = do
   wsPtrF <- mallocForeignPtr
   withForeignPtr wsPtrF $ \wsPtr -> do
-    eC <- [C.exp| int { ioctl(0, TIOCGWINSZ, $(winsize * wsPtr)) } |]
+    eC <- [C.exp| int { ioctl(0, TIOCGWINSZ, $(Win_Size *wsPtr)) } |]
     case eC of
         0 -> Right <$> peek wsPtr
         _ -> return $ Left eC

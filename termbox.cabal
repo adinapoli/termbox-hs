@@ -21,6 +21,8 @@ flag examples
   default:             False
 
 library
+  c-sources: 
+    src/Termbox.c
   exposed-modules:
     Termbox
     Termbox.API
@@ -44,6 +46,7 @@ library
     bytestring,
     text
   hs-source-dirs:      src
+  include-dirs:        include
   default-language:    Haskell2010
   ghc-options:
     -Wall

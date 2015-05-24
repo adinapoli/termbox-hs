@@ -16,25 +16,26 @@ import qualified Language.C.Types as C
 import qualified Data.Map.Strict as Map
 
 #include <sys/ioctl.h>
+#include "wrapper.h"
 
 data WinSize = WinSize { 
       wsRow, wsCol, wsXPixel, wsYPixel :: !CUShort
     } deriving (Show, Eq, Ord, Read)
 
 instance Storable WinSize where
-  sizeOf _ = (#size struct winsize)
+  sizeOf _ = (#size Win_Size)
   alignment _ = alignment (undefined :: Ptr WinSize)
   peek ptr = do
-    r <- (#peek struct winsize, ws_row) ptr
-    c <- (#peek struct winsize, ws_col) ptr
-    x <- (#peek struct winsize, ws_xpixel) ptr
-    y <- (#peek struct winsize, ws_ypixel) ptr
+    r <- (#peek Win_Size, ws_row) ptr
+    c <- (#peek Win_Size, ws_col) ptr
+    x <- (#peek Win_Size, ws_xpixel) ptr
+    y <- (#peek Win_Size, ws_ypixel) ptr
     return $ WinSize r c x y
   poke ptr WinSize{..} = do
-    (#poke struct winsize, ws_row) ptr wsRow
-    (#poke struct winsize, ws_col) ptr wsCol
-    (#poke struct winsize, ws_xpixel) ptr wsXPixel
-    (#poke struct winsize, ws_ypixel) ptr wsYPixel
+    (#poke Win_Size, ws_row) ptr wsRow
+    (#poke Win_Size, ws_col) ptr wsCol
+    (#poke Win_Size, ws_xpixel) ptr wsXPixel
+    (#poke Win_Size, ws_ypixel) ptr wsYPixel
 
 ioCtlCtx :: Context
 ioCtlCtx = baseCtx <> funCtx <> vecCtx <> ctx
@@ -46,5 +47,5 @@ ioCtlCtx = baseCtx <> funCtx <> vecCtx <> ctx
 ioCtlTypesTable :: Map.Map C.TypeSpecifier TH.TypeQ
 ioCtlTypesTable = Map.fromList
   [ 
-    (C.TypeName "winsize", [t| WinSize |])
+    (C.TypeName "Win_Size", [t| WinSize |])
   ]
