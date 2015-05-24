@@ -15,6 +15,11 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
+
+flag examples
+  description:         Build examples
+  default:             False
+
 library
   exposed-modules:
     Termbox
@@ -22,15 +27,19 @@ library
     Termbox.API.Types
   other-modules:
     Termbox.Internal.Types
+    Termbox.Internal.Unsafe.Syscall.IOCtl
     Termbox.Internal.Buffer
   -- other-extensions:    
   build-depends:       
     base >=4.8 && < 5,
     buffer-builder >= 0.2.2.2 && < 0.4,
     io-streams >= 1.0.0.0 && < 1.5.0.0,
+    containers,
+    template-haskell,
     transformers < 0.5,
     string-conv,
     mtl >= 2.2.1,
+    inline-c >= 0.5.0.1,
     vector,
     bytestring,
     text
@@ -41,3 +50,21 @@ library
     -Werror
     -funbox-strict-fields
     -fwarn-tabs
+    -fPIC
+  cc-options: -m64
+
+executable hello-winsize
+  hs-source-dirs:      examples
+  main-is:             hello_winsize.hs
+  c-sources:           examples/hello_winsize.c
+  default-language:    Haskell2010
+  cc-options:          -m64
+  ghc-options:         -Wall -fPIC
+
+  if flag(examples)
+    buildable: True
+    build-depends:       base >=4 && <5
+                       , inline-c
+                       , termbox
+  else
+    buildable: False

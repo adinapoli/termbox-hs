@@ -1,2 +1,4 @@
 .hub
 dist
+examples/*.o
+examples/*.hi

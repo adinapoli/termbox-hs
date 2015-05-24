@@ -1,9 +1,30 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Termbox where
 
 import Termbox.Internal.Types
 import Termbox.API.Types
+import Foreign.Storable
 import Control.Monad.State (gets)
+
+import           Language.C.Inline
+import qualified Language.C.Inline as C
+import Foreign.ForeignPtr
+import           Termbox.Internal.Unsafe.Syscall.IOCtl
+
+context ioCtlCtx
+C.include "<sys/ioctl.h>"
+
+unsafeGetWinSize :: IO (Either CInt WinSize)
+unsafeGetWinSize = do
+  wsPtrF <- mallocForeignPtr
+  withForeignPtr wsPtrF $ \wsPtr -> do
+    eC <- [C.exp| int { ioctl(0, TIOCGWINSZ, $(winsize * wsPtr)) } |]
+    case eC of
+        0 -> Right <$> peek wsPtr
+        _ -> return $ Left eC
 
 --------------------------------------------------------------------------------
 writeCursor :: CursorPosition -> Termbox ()
@@ -74,6 +95,10 @@ type winsize struct {
 	xpixels uint16
 	ypixels uint16
 }
+
+getWinSize :: Termbox WinSize
+getWinSize = do
+  win
 
 func get_term_size(fd uintptr) (int, int) {
 	var sz winsize
