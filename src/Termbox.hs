@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE QuasiQuotes #-}
 module Termbox where
@@ -11,21 +11,13 @@ import Control.Monad.State (gets)
 
 import           Language.C.Inline
 import qualified Language.C.Inline as C
-import Foreign.ForeignPtr
+import           Foreign.ForeignPtr
+import           Foreign.C.Error
 import           Termbox.Internal.Unsafe.Syscall.IOCtl
 
 context ioCtlCtx
 C.include "<sys/ioctl.h>"
 C.include "wrapper.h"
-
-unsafeGetWinSize :: IO (Either CInt WinSize)
-unsafeGetWinSize = do
-  wsPtrF <- mallocForeignPtr
-  withForeignPtr wsPtrF $ \wsPtr -> do
-    eC <- [C.exp| int { ioctl(0, TIOCGWINSZ, $(Win_Size *wsPtr)) } |]
-    case eC of
-        0 -> Right <$> peek wsPtr
-        _ -> return $ Left eC
 
 --------------------------------------------------------------------------------
 writeCursor :: CursorPosition -> Termbox ()
@@ -89,24 +81,25 @@ writeSgr (Attribute fg) (Attribute bg) = onSGR onOK onKO
       intbufAppendInt (fromIntegral bg - 1) >>= writeOutBS 
 
 
-{-
-type winsize struct {
-	rows    uint16
-	cols    uint16
-	xpixels uint16
-	ypixels uint16
-}
+--------------------------------------------------------------------------------
+getTermSize :: Termbox (Either InvariantViolation (CUShort, CUShort))
+getTermSize = do
+  r <- io getWinSize 
+  return $ r >>= (\WinSize{..} -> return (wsCol, wsRow))
 
-getWinSize :: Termbox WinSize
+--------------------------------------------------------------------------------
+getWinSize :: IO (Either InvariantViolation WinSize)
 getWinSize = do
-  win
+  wsPtrF <- mallocForeignPtr
+  withForeignPtr wsPtrF $ \wsPtr -> do
+    eC <- [C.exp| int { ioctl(0, TIOCGWINSZ, $(Win_Size *wsPtr)) } |]
+    case eC of
+        0 -> Right <$> peek wsPtr
+        _ -> do
+          eNo <- getErrno
+          return $ Left $ SyscallFailed "ioctl(0, TIOCGWINSZ)" eC eNo
 
-func get_term_size(fd uintptr) (int, int) {
-	var sz winsize
-	_, _, _ = syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(&sz)))
-	return int(sz.cols), int(sz.rows)
-}
+{-
 
 func send_attr(fg, bg Attribute) {
 	if fg == lastfg && bg == lastbg {

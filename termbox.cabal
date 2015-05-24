@@ -59,7 +59,6 @@ library
 executable hello-winsize
   hs-source-dirs:      examples
   main-is:             hello_winsize.hs
-  c-sources:           examples/hello_winsize.c
   default-language:    Haskell2010
   cc-options:          -m64
   ghc-options:         -Wall -fPIC
