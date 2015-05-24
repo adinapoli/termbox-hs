@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Termbox.Internal.Types where
@@ -10,11 +11,32 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.State.Strict (StateT(..))
 import Termbox.API.Types
 import Data.Monoid
+import Data.Typeable
+import Control.Exception
 import Data.String.Conv
 import Data.ByteString (ByteString)
 import Data.ByteString.Builder
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+
+import Foreign.C.Error
+import Foreign.C.Types
+
+io :: MonadIO m => IO a -> m a
+io = liftIO
+
+data InvariantViolation =
+  SyscallFailed !String !CInt !Errno
+  deriving (Eq, Typeable)
+
+instance Show InvariantViolation where
+  show (SyscallFailed sysName errCode (Errno enoCode)) =
+    "Syscall failed: " <> sysName 
+                       <> ", exitCode = " 
+                       <> show errCode 
+                       <> ", errno = " <> show enoCode
+
+instance Exception InvariantViolation
 
 -------------------------------------------------------------------------------
 data CellBuf = CellBuf {
