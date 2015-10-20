@@ -1,0 +1,38 @@
+Configuring buffer-builder-0.2.4.0...
+Building buffer-builder-0.2.4.0...
+Preprocessing library buffer-builder-0.2.4.0...
+[1 of 3] Compiling Data.BufferBuilder ( src/Data/BufferBuilder.hs, .stack-work/dist/x86_64-osx/Cabal-1.22.4.0/build/Data/BufferBuilder.o )
+
+src/Data/BufferBuilder.hs:66:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+
+src/Data/BufferBuilder.hs:68:1: Warning:
+    The import of ‘Control.Monad’ is redundant
+      except perhaps to import instances from ‘Control.Monad’
+    To import instances alone, use: import Control.Monad()
+[2 of 3] Compiling Data.BufferBuilder.Utf8 ( src/Data/BufferBuilder/Utf8.hs, .stack-work/dist/x86_64-osx/Cabal-1.22.4.0/build/Data/BufferBuilder/Utf8.o )
+
+src/Data/BufferBuilder/Utf8.hs:57:1: Warning:
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+[3 of 3] Compiling Data.BufferBuilder.Json ( src/Data/BufferBuilder/Json.hs, .stack-work/dist/x86_64-osx/Cabal-1.22.4.0/build/Data/BufferBuilder/Json.o )
+
+src/Data/BufferBuilder/Json.hs:54:1: Warning:
+    The import of ‘when’ from module ‘Control.Monad’ is redundant
+
+src/Data/BufferBuilder/Json.hs:58:1: Warning:
+    The import of ‘Data.Monoid’ is redundant
+      except perhaps to import instances from ‘Data.Monoid’
+    To import instances alone, use: import Data.Monoid()
+
+src/Data/BufferBuilder/Json.hs:60:1: Warning:
+    The import of ‘Data.Foldable’ is redundant
+      except perhaps to import instances from ‘Data.Foldable’
+    To import instances alone, use: import Data.Foldable()
+In-place registering buffer-builder-0.2.4.0...
+Installing library in
+/Users/adinapoli/.stack/snapshots/x86_64-osx/lts-3.10/7.10.2/lib/x86_64-osx-ghc-7.10.2/buffer-builder-0.2.4.0-5CnWLNiexCfGiDhxF4Gywx
+Registering buffer-builder-0.2.4.0...

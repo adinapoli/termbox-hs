@@ -1,0 +1,8 @@
+resolver: lts-3.10
+system-ghc: false
+install-ghc: true
+packages:
+  - '.'
+extra-deps:
+  - string-conv-0.1
+  - inline-c-0.5.5.1

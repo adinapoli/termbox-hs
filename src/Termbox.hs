@@ -23,9 +23,9 @@ C.include "wrapper.h"
 writeCursor :: CursorPosition -> Termbox ()
 writeCursor (CursorPosition x y) = do
   writeOut "\033["
-  intbufAppendInt (y + 1) >>= writeOutBS 
+  intbufAppendInt (y + 1) >>= writeOutBS
   writeOut ";"
-  intbufAppendInt (x + 1) >>= writeOutBS 
+  intbufAppendInt (x + 1) >>= writeOutBS
   writeOut "H"
 
 --------------------------------------------------------------------------------
@@ -47,10 +47,10 @@ writeSgrFg (Attribute a) = onSGR onOK onKO
   where
     onOK = do
       writeOut "\033[38;5;"
-      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS 
+      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS
     onKO = do
       writeOut "\033[3"
-      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS 
+      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS
 
 --------------------------------------------------------------------------------
 writeSgrBg :: Attribute -> Termbox ()
@@ -58,10 +58,10 @@ writeSgrBg (Attribute a) = onSGR onOK onKO
   where
     onOK = do
       writeOut "\033[48;5;"
-      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS 
+      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS
     onKO = do
       writeOut "\033[4"
-      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS 
+      intbufAppendInt (fromIntegral a - 1) >>= writeOutBS
 
 --------------------------------------------------------------------------------
 -- TODO: This function can be refactored further.
@@ -70,21 +70,21 @@ writeSgr (Attribute fg) (Attribute bg) = onSGR onOK onKO
   where
     onOK = do
       writeOut "\033[38;5;"
-      intbufAppendInt (fromIntegral fg - 1) >>= writeOutBS 
+      intbufAppendInt (fromIntegral fg - 1) >>= writeOutBS
       writeOut "m"
       writeOut "\033[48;5;"
-      intbufAppendInt (fromIntegral bg - 1) >>= writeOutBS 
+      intbufAppendInt (fromIntegral bg - 1) >>= writeOutBS
     onKO = do
       writeOut "\033[3"
-      intbufAppendInt (fromIntegral fg - 1) >>= writeOutBS 
+      intbufAppendInt (fromIntegral fg - 1) >>= writeOutBS
       writeOut ";4"
-      intbufAppendInt (fromIntegral bg - 1) >>= writeOutBS 
+      intbufAppendInt (fromIntegral bg - 1) >>= writeOutBS
 
 
 --------------------------------------------------------------------------------
 getTermSize :: Termbox (Either InvariantViolation (CUShort, CUShort))
 getTermSize = do
-  r <- io getWinSize 
+  r <- io getWinSize
   return $ r >>= (\WinSize{..} -> return (wsCol, wsRow))
 
 --------------------------------------------------------------------------------

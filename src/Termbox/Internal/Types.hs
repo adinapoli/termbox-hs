@@ -168,5 +168,3 @@ pattern T_max_funcs    = 14
 
 pattern Coord_invalid = -2
 pattern Attr_invalid  = Attribute 0xFFFF
-
-
