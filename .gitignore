@@ -4,3 +4,4 @@ examples/*.o
 examples/*.hi
 **/.*/**.c
 src/*.c
+.stack-work
